@@ -1,0 +1,550 @@
+# Reviewing linear models
+
+Much of our research focuses on investigating how patterns we observe can be explained by predictive variables.
+
+We are often looking for a function $f$ that can explain a response variable ( $Y$ ) *in terms of* one ( $X_1$ ) or many other predictors ( $X_2$, $X_3$, $...$ , $X_n$ ):
+
+$$Y = f(X_1)$$
+The combination of predictive variables we have sampled will *never* fully explain $Y$. Because of this, there is always *unpredictable disturbance* in our models, *i*.*e*. the error $\epsilon$. As such, the error is an irrevocable part of our function:
+
+$$Y = f(X_1, \epsilon)$$
+In [Workshop 4](https://qcbsrworkshops.github.io/workshop04/pres-en/workshop04-pres-en.html#1), we have learned how to use **general linear models** as $f(\cdot)$ to describe the relationship between variables. They were: the $t$-test, the analysis of variance (or, ANOVA), the linear regression (both simple, with one predictor, and multiple, with more than one predictor), and the analysis of covariance (ANCOVA).
+
+## General linear models
+
+### Definition
+
+The general form of our function $Y = f(X_1)$ as a linear function can be represented by:
+
+$$Y = \beta_0 + \beta_1X_i + \varepsilon$$
+
+where:
+
+$Y_i$ is the predicted value of a response variable
+
+$\beta_0$ is the *unknown coefficient* **intercept**
+
+$\beta_1$ is the *unknown coefficient* **slope**
+
+$X_i$ is the value for the explanatory variable
+
+$\varepsilon_i$ is the model residual drawn from a normal distribution with a varying mean but a constant variance.
+
+### Assumptions
+
+**Linear models** only produce unbiased estimators (i.e. are only reliable) if they follow certain assumptions. Most importantly:
+
+1\. The population can be described by a linear relationship:
+
+$$Y = \beta_0 + \beta_1X_i + \varepsilon$$
+
+2\. The error term $\varepsilon$ has the same variance given any value of the explanatory variable (_i.e._ homoskedasticity), and the error terms are not correlated across observations (i.e. no autocorrelation):
+
+$$\mathbb{V}{\rm ar} (\epsilon_i | \mathbf{X} ) = \sigma^2_\epsilon,\ \forall i = 1,..,N$$
+and,
+
+$$\mathbb{C}{\rm ov} (\epsilon_i, \epsilon_j) = 0,\ i \neq j$$
+
+3\. And, the residuals are normal:
+
+$$\boldsymbol{\varepsilon} | \mathbf{X} \sim \mathcal{N} \left( \mathbf{0}, \sigma^2_\epsilon \mathbf{I} \right)$$
+The estimations of general linear models as in $\widehat{Y} = \widehat{\beta}_0 + \widehat{\beta}_1 X$ assumes that data is generated following these assumptions.
+
+```{r echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE}
+# Set the coefficients:
+N = 50
+beta_0 = 1
+beta_1 = 0.5
+# Generate sample data:
+x <- 0:N
+e <- rnorm(mean = 0, sd = 2, n = length(x))
+y <- beta_0 + beta_1 * x + e
+# Fit regression
+d <- data.frame(x, y)
+fit <- lm(y ~ x, data = d)
+d$predicted <- predict(fit)   # Save the predicted values
+d$residuals <- residuals(fit) # Save the residual values
+
+# Plot the data
+
+ggplot(d, aes(x = x, 
+              y = y)) +
+  geom_smooth(method = "lm", se = FALSE, color = "lightgrey", shape = 2) +
+  geom_segment(aes(xend = x, yend = predicted), alpha = 0.2) +
+  # > Alpha adjustments made here...
+  geom_point(aes(alpha = abs(residuals)), size = 2) +  # Alpha mapped to abs(residuals)
+  stat_poly_eq(formula = y ~ x, eq.with.lhs = "italic(hat(y))~`=`~",
+                aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~"), size = 5), 
+                parse = TRUE) +         
+  guides(alpha = FALSE) +  # Alpha legend removed
+ # geom_line(aes(y = predicted), shape = 3) +
+  theme_classic(base_size = 20) +
+  theme(
+        plot.margin = unit(c(0, 0, 0, 0), "null"),
+    panel.margin = unit(c(0, 0, 0, 0), "null")
+  )
+```
+
+
+## An example with general linear models
+
+Let us simulate 250 observations which satisfies our assumptions:  $\epsilon_i \sim \mathcal{N}(0, 2^2), i = 1,...,250$.
+
+```{r}
+nSamples <- 250
+ID <- factor(c(seq(1:nSamples)))
+
+PredVar <- runif(nSamples, 
+                  min = 0, 
+                  max = 50)
+
+simNormData <- data.frame(
+  ID = ID,
+  PredVar = PredVar,
+  RespVar = (2*PredVar + 
+               rnorm(nSamples,
+                     mean = 0,
+                     sd = 2)
+             )
+  )
+
+# We have learned how to use lm() 
+
+lm.simNormData <- lm(RespVar ~ PredVar, 
+                     data = simNormData)
+```
+
+We can plot the result of our `lm()` model to produce diagnostic figures for our model:
+
+```{r}
+layout(
+  matrix(c(1, 2, 3, 4), 
+              2, 2)
+       ) 
+
+plot(lm.simNormData)
+```
+
+These graphs allow one to assess how assumptions of linearity and homoscedasticity are being met. Briefly, :
+
+1. The Q-Q plot allows the comparison of the residuals to "ideal" normal observations;
+
+2. The scale-location plot (square rooted standardized residual vs. predicted value) is useful for checking the assumption of homoscedasticity;
+
+3. Cook's Distance, which is a measure of the influence of each observation on the regression coefficients and helps identify outliers.
+
+:::explanation
+Residuals are $Y-\widehat{Y}$, or the observed value minus the predicted value. 
+:::
+
+:::explanation
+Outliers are observations $Y$ with large residuals, i.e. the observed value $Y$ for a point $X$ is very different from the one predicted by the regression model $\widehat{Y}$.
+:::
+
+:::explanation
+A leverage point is defined as an observation $Y$ that has a value of $x$ that is far away from the mean of $x$. 
+:::
+
+:::explanation
+An influential observation is defined as an observation $Y$ that changes the slope of the line $\beta_1$. Thus, influential points have a large influence on the fit of the model. One method to find influential points is to compare the fit of the model with and without each observation.
+:::
+
+# Example with real data
+Let us use our prior knowledge on general linear models to explore the relationship between variables within the *Oribatid mite data set*.
+
+Let us begin by loading this data set into `R`:
+
+```{r echo=TRUE}
+# Use setwd() to set your working directory
+
+mites <- read.csv('data/mites.csv',
+                  stringsAsFactors = TRUE)
+```
+
+The dataset that you just loaded is a subset from the classic [Oribatid mites (Acari,Oribatei)](http://adn.biol.umontreal.ca/~numericalecology/data/oribates.html), which has been used in numerous texts (_e.g._ Borcard,
+Gillet & Legendre, *Numerical Ecology with R*), and which is available in the `vegan` library.
+
+The Oribatid mite dataset has **70 observations with moss and mite samples** collected at the [Station de Biologie from the Université de Montréal](https://goo.gl/maps/PxN1Q7KUPnUt92Eu5).
+], within the municipality of Saint-Hippolyte, Québec (Canada). Each sample includes **5** variables of **environmental measurements** and abundance for *Galumna* sp. for each site.
+
+We can peek into the structure and the first six rows of the dataset using the `head()` and `str()` functions:
+
+```{r, echo = TRUE, eval = TRUE}
+head(mites)
+
+str(mites)
+```
+
+Our first glance into the dataset already allows us to separate potential response variables from potential predictors:
+
+<div class = "split">
+<div class = "split-left">
+
+Response variables:
+
+1. Occurrence: `pa`
+2. Abundance: `Galumna`
+3. Relative Frequency or Proportion: `prop`
+</div>
+
+<div class = "split-right">
+
+Predictive variables:
+
+1. Substract Density: `SubsDens`
+2. Water Content: `WatrCont`
+3. Substrate: `Substrate`
+4. Shrubs Nearby: `Shrub`
+5. Topography: `Topo`
+
+</div>
+</div>
+
+We can also already elaborate an initial question: **Could the abundance, occurrence or proportion of _Galumna sp._ be predicted by environmental features?**
+
+To answer this question, we can think of a variety of functions:
+
+$\text{Abundance} = f(\text{Water content}, \epsilon)$
+
+$\text{Proportion} = f(\text{Water content}, \epsilon)$
+
+$\text{Occurrence} = f(\text{Substrate}, \epsilon)$
+
+$\text{Abundance} = f(\text{Topography}, \epsilon)$
+
+
+$\text{Occurrence} = f(\text{Shrubs Nearby}, \epsilon)$
+
+$\text{Relative Frequency} = f(\text{Topography}, \epsilon)$
+
+$\text{Occurrence} = f(\text{Substract Density}, \epsilon)$
+
+$\text{Abundance} = f(\text{Substrate}, \epsilon)$
+
+
+**Can we see a relationship between *Galumna* and any of the five environmental variables?**
+
+Let us attempt to be more specific and ask **whether he composition of *Galumna*'s communities (abundance, occurrence and relative frequency) vary as a function of water content?**.
+
+We can begin by representing all three response variables against the predictor:
+
+```{r, echo = TRUE, eval = TRUE}
+plot(Galumna ~ WatrCont,
+     data = mites,
+     xlab = 'Water content',
+     ylab = 'Abundance')
+```
+
+```{r, echo = TRUE, eval = TRUE}
+boxplot(WatrCont ~ pa,
+        data = mites,
+        xlab='Presence/Absence',
+        ylab = 'Water content')
+```
+
+```{r, echo = TRUE, eval = TRUE}
+plot(prop ~ WatrCont,
+     data = mites,
+     xlab = 'Water content',
+     ylab = 'Proportion')
+```
+
+Indeed, `Galumna` seems to vary negatively as a function of `WatrCont`, *i*.*e*. *Galumna* sp. seems to prefer dryer sites.
+
+We can go step further and fit general linear models to test whether `Galumna`, `pa`, or `prop` vary as a function of `WatrCont` using the `lm()` function:
+
+
+```{r, eval = -c(2, 5, 8)}
+# Fit the models
+
+# Abundance model
+lm.abund <- lm(Galumna ~ WatrCont, data = mites)
+
+# Presence-absence model
+lm.pa <- lm(pa ~ WatrCont, data = mites)
+
+# Proportion model
+lm.prop <- lm(prop ~ WatrCont, data = mites)
+```
+
+Then, we can check the model output to verify whether these relationships are statistically significant:
+
+```{r, echo = TRUE, eval = TRUE}
+# Check the model output with the summary() function
+summary(lm.abund)
+```
+
+```{r, echo = TRUE, eval = TRUE}
+summary(lm.pa)
+```
+
+```{r, echo = TRUE, eval = TRUE}
+summary(lm.prop)
+```
+
+```{r}
+# Extracting the Pr(>|t|)
+
+summary(lm.abund)$coefficients[, 4]
+summary(lm.pa)$coefficients[, 4]
+summary(lm.prop)$coefficients[, 4]
+```
+
+For now, yes, there is a strong and significant relationship for all 3 response variables! 
+
+**But, wait a minute...** We are forgetting something important here! 
+
+What about the assumptions of linear models?
+
+# Recalling linear models: assumptions
+
+Let us validate these models to confirm that the assumptions of linear models are being respected, starting with the abundance model.
+
+```{r, echo = TRUE, eval = TRUE, fig.width = 7, fig.height = 7, fig.align = "center"}
+# Plot the abundance model
+plot(Galumna ~ WatrCont, data = mites)
+abline(lm.abund)
+```
+
+The model does not fit well. It predicts negative abundance values when `WatrCont` exceeds 600, which does not make any sense. Also, the model does poorly at predicting high abundance values at low values of `WatrCont`.
+
+We can also check the model diagnostic plots:
+
+```{r, echo = TRUE, eval = TRUE, fig.show="hold", out.width = "50%", out.height = "50%"}
+# Diagnostic plots
+plot(lm.abund)
+```
+
+Diagnostic plots show that the data/model violate assumptions of
+homogeneity of variance (the graph on the left shows that residuals are larger at higher fitted values) and normality (the graph on the right indicates that residuals are not distributed as expected from a normal distribution, _i.e._ many points are far from predicted values given by the dotted line). 
+Therefore, we need to reject this model, and cannot use it to conclude that _Galumna_ abundances vary as a function of water
+content.
+
+The diagnostic plots for the presence-absence model and
+the proportion model also indicate that these models are also inappropriate:
+
+```{r, echo = TRUE, eval = TRUE, fig.width = 7, fig.height = 7, fig.align="center"}
+# Plot the proportion model
+plot(prop ~ WatrCont, data = mites)
+abline(lm.prop)
+```
+
+```{r, echo = TRUE, eval = TRUE, fig.show = "hold", out.width="50%", out.height="50%"}
+# Diagnostic plots
+plot(lm.prop)
+```
+
+```{r, echo = TRUE, eval = TRUE, fig.width = 7, fig.height = 7, fig.align="center"}
+# Plot the presence/absence model
+plot(pa ~ WatrCont, data = mites)
+abline(lm.pa)
+```
+
+```{r, echo = TRUE, eval = TRUE, fig.show = "hold", out.width="50%", out.height="50%"}
+# Diagnostic plots
+plot(lm.pa)
+```
+
+Let us take a step back here and review the assumptions of linear models, and where they come from. Remember our simple linear model?
+
+$$Y_i = \beta_0 + \beta_1X_i + \varepsilon$$
+
+The last entry $\varepsilon_i$ is important. This is where assumptions of
+normality and homoscedasticity originate. In linear models, **the residuals $\varepsilon_i$ (the distance between each observation and the regression line) can be predicted by drawing random values from a normal distribution.**
+
+Recall that all normal distributions have two parameters, $\mu$ (the mean of the distribution) and $\sigma^2$ (the variance of the distribution). In a linear model, $\mu$ changes based on values of $X$ (the predictor
+variable), but $\sigma^2$ has the same value for all values of $Y$. Our simple linear can also be written as this:
+
+$$Y_i \sim N(\mu = \beta_0 + \beta_1 X_i +\varepsilon, \sigma^2)$$
+
+with $N(\cdot)$ meaning that $Y_i$ is drawn from a **normal distribution** with parameters $\mu$ (mean; which depends on $x_i$) and $\sigma$ (variance; which has the same value for all $Y_i$s).
+
+Let us take a look at what happens to the distribution when we vary the parameters $\mu$ and $\sigma$.
+
+Varying $\mu$ while $\sigma = 5$ shifts the mean of the distribution.
+
+```{r, echo = FALSE, fig.align="center", fig.width = 7, fig.height = 7}
+# Demonstrating normal distributions with different means
+x = seq(1, 50, 0.1)
+plot(x, dnorm(x, mean = 20, sd = 5),
+type = 'l', lwd = 3,
+xlab = '# galumna', ylab = 'Probability')
+points(x, dnorm(x, mean = 25, sd = 5),
+type = 'l', lwd = 3, col = 2)
+points(x, dnorm(x, mean = 30, sd = 5), type = 'l', lwd = 3, col = 4)
+legend('topleft', legend = c('20', '25', '30'), lty = 1, col = c(1,2,4), bty = 'n', lwd = 2, cex = 1.1)
+```
+
+If we keep $\mu = 25$, varying $\sigma$ changes the shape of the distribution, where smaller $\sigma$ (low variance) means there is higher probability around the mean, while larger $\sigma$ spreads out the probabilities across the full range of values.
+
+```{r, echo=FALSE, fig.align="center", fig.width = 7, fig.height = 7}
+# Demonstrating normal distributions with different variance
+x = seq(1, 50, 0.1)
+plot(x, dnorm(x, mean = 25, sd = 5), type = 'l', lwd = 3, xlab = '# galumna', ylab = 'Probability')
+points(x, dnorm(x, mean = 25, sd = 7.5), type = 'l', lwd = 3, col = 2)
+points(x, dnorm(x, mean = 25, sd = 10), type = 'l', lwd = 3, col = 4)
+legend('topleft', legend = c('5', '7.5', '10'), lty = 1, col = c(1,2,4), bty = 'n', lwd = 2, cex = 1.1)
+```
+
+## Model prediction
+
+When the assumptions of the linear model are not met, model prediction becomes problematic. Let us work through an example to demonstrate some of the problems that arise from a poorly fitted model.
+
+Remember that when we predict, we aim at estimating the *unknown coefficients* $\beta_0$ and $\beta_1$ so that a line effectively predicting every value of $Y$ as a function of $X$ can be drawn!
+
+$$Y_i \sim N(\mu = \beta_0 + \beta_1 X_i +\varepsilon, \sigma^2)$$
+
+Let us predict *Galumna* abundance at a water content = 300 using the linear model we fit above. **What are the parameters of the normal distribution used to model $Y$ when water content is $300$?**
+
+Let us begin by obtaining the parameters $\mu$ and $\sigma^2$ for a normal distribution corresponding to our equation. To obtain the coefficients from our models, we can use the function `coef()`:
+
+```{r, echo = TRUE}
+# Extract model coefficients
+coef(lm.abund)
+```
+
+These coefficients would allow us to predict *Galumna* abundance if there was no error. However, we know that error is an **irrevocable** part of our model. To get our predicted values, we therefore also need to add \varepsilon. This is where we use the normal
+distribution! For $X$ = 300, our model predicts that \varepsilon should follow a normal distribution with mean = 1.63. We can extract the variance ($\sigma^2$) from our model summary:
+
+```{r, echo = TRUE}
+# Extract variance from the model summary
+summary(lm.abund)$sigma
+```
+
+We can plug these values into the equation we just discussed above:
+$$Y_i \sim N(\mu = \beta_0 + \beta_1 X_i +\varepsilon, \sigma^2)$$
+$\mu = 3.44 + (-0.006 \times 300) = 1.63$
+
+$\sigma^2 = 1.51$
+
+This tells us that randomly drawn $Y$ values when water content is $300$ should be on average $1.63$ and have a variance of $1.51$. In other words, at $x = 300$, residuals should follow a normal distribution with $\mu = 1.63$ and $\sigma^2 = 1.51$. At $x = 400$, we get $\mu = 1.02$ and $\sigma^2 = 1.51$, etc.
+
+
+At a water content of 400, residuals \varepsilon should follow a normal distribution with parameters $\mu = 3.44 + (-0.006 x 400) = 1.02$ and $\sigma^2 = 1.51$, and thereon. 
+
+Each $Y$ value is modeled using a normal distribution with a mean that depends on $X_i$, but with a variance that is constant $\sigma^2 = 1.51$ across all $X_i$ values. 
+
+We can represent these expectations like this:
+
+```{r echo = FALSE, fig.height = 5, fig.width= 5}
+#Code to generate figure that illustrates assumptions of linear models
+plot.norm <- function(x, mymodel, mult = 1, sd.mult = 3, mycol = 'LightSalmon', howmany = 150) {
+  yvar <- mymodel$model[,1]
+  xvar <- mymodel$model[,2]
+  sigma <- summary(mymodel)$sigma
+  stick.val <- rep(xvar[x],howmany)+mult*dnorm(seq(predict(mymodel)[x]-sd.mult*sigma, predict(mymodel)[x]+sd.mult*sigma, length = howmany), mean=predict(mymodel)[x],sd=sigma)
+  steps<-seq(predict(mymodel)[x]-sd.mult*sigma,predict(mymodel)[x]+sd.mult*sigma,length=howmany)
+  polygon(c(stick.val,rep(xvar[x],howmany)),c(sort(steps,decreasing=T),steps),col=mycol,border=NA)
+}
+#function adapted from http://www.unc.edu/courses/2010fall/ecol/563/001/notes/lecture4%20Rcode.txt
+plot(Galumna ~ WatrCont, 
+     data = mites,
+          xlab = "Water content",
+     ylab = "Abundance",
+     ylim = c(-4,8), cex.axis = 1,
+     cex.lab = 1,
+     type='n')
+plot.norm(8,
+          lm.abund,
+          200)
+plot.norm(11,
+          lm.abund,
+          200)
+plot.norm(36,
+          lm.abund,
+          200)
+plot.norm(52,
+          lm.abund,
+          200)
+abline(h=0,
+       lty=3)
+points(Galumna ~ WatrCont, data = mites, pch = 21,
+       col = rgb(red = 0, green = 0, blue = 1, alpha = 0))
+abline(lm.abund,lty=1)
+abline(v=mites$WatrCont[c(8,11,36,52)],col='red',lty=2)
+text(x = mites$WatrCont[8]+50,y=7.5,expression(mu == 1.8),cex=1,col='red')
+text(x = mites$WatrCont[11]+50,y=7.5,expression(mu == 2.6),cex=1,col='red')
+text(x = mites$WatrCont[36]+50,y=7.5,expression(mu == 0.9),cex=1,col='red')
+text(x = mites$WatrCont[52]+60,y=7.5,expression(mu == -0.1),cex=1,col='red')
+text(x = mites$WatrCont[52]+105,y=6.5,expression(sigma == 'always' ~ 1.51),cex=1,col='red')
+```
+
+The four normal distributions on this graph represent the probability of observing a given Galumna abundance for 4 different water content values. 
+
+The mean of the normal distribution varies as a function of water content (hence $\mu$  decreases with water content), but $\sigma^2$ is always 1.51 (_i.e._ the variance is homogeneous across all values of $X$).
+
+Our model thus expects observations to fall within the following shaded areas. However, what happens if we add our observations to this plot?
+
+```{r echo = FALSE, fig.height = 5, fig.width= 5}
+#Code to generate figure that illustrates assumptions of linear models
+plot.norm <- function(x, mymodel, mult = 1, sd.mult = 3, mycol = 'LightSalmon', howmany = 150) {
+  yvar <- mymodel$model[,1]
+  xvar <- mymodel$model[,2]
+  sigma <- summary(mymodel)$sigma
+  stick.val <- rep(xvar[x],howmany)+mult*dnorm(seq(predict(mymodel)[x]-sd.mult*sigma, predict(mymodel)[x]+sd.mult*sigma, length = howmany), mean=predict(mymodel)[x],sd=sigma)
+  steps<-seq(predict(mymodel)[x]-sd.mult*sigma,predict(mymodel)[x]+sd.mult*sigma,length=howmany)
+  polygon(c(stick.val,rep(xvar[x],howmany)),c(sort(steps,decreasing=T),steps),col=mycol,border=NA)
+}
+#function adapted from http://www.unc.edu/courses/2010fall/ecol/563/001/notes/lecture4%20Rcode.txt
+plot(Galumna ~ WatrCont, 
+     data = mites,
+     ylim = c(-4,8), 
+     xlab = "Water content",
+     ylab = "Abundance",
+     cex.axis = 1,
+     cex.lab = 1,
+     type='n')
+plot.norm(8,
+          lm.abund,
+          200)
+plot.norm(11,
+          lm.abund,
+          200)
+plot.norm(36,
+          lm.abund,
+          200)
+plot.norm(52,
+          lm.abund,
+          200)
+abline(h=0,
+       lty=3)
+points(Galumna ~ WatrCont, data = mites, pch = 21,
+       col = rgb(red = 0, green = 0, blue = 1, alpha = 1))
+abline(lm.abund,lty=1)
+abline(v = mites$WatrCont[c(8,11,36,52)],col='red',lty=2)
+text(x = mites$WatrCont[8]+50,y=7.5,expression(mu == 1.8),cex=1,col='red')
+text(x = mites$WatrCont[11]+50,y=7.5,expression(mu == 2.6),cex=1,col='red')
+text(x = mites$WatrCont[36]+50,y=7.5,expression(mu == 0.9),cex=1,col='red')
+text(x = mites$WatrCont[52]+60,y=7.5,expression(mu == -0.1),cex=1,col='red')
+text(x = mites$WatrCont[52]+105,y=6.5,expression(sigma == 'always' ~ 1.51),cex=1,col='red')
+```
+
+This model seems inappropriate (!) for at least two reasons:
+
+**1.  Values are on average further from the regression line at low water content values.** That is, there is more residual variance around the predicted values for low values of $X$, such that $\varepsilon$ varies as a function of $X$, thus violating the assumption of homoscedasticity. It makes no sense to use a constant value of $\sigma^2$: the normal distributions used to predict $Y$ at low values of $X$ should ideally be wider (have a larger $\sigma^2$) than normal distributions used to predict $Y$ at large $X$ values, but linear models do not permit this.
+
+**2. The residuals do not follow a normal distribution with constant variance across all values of** $X$. The variance of the residuals' distribution changes as a function of $X$ (see the spread of the data points around the trend line!).
+
+**3. The predicted values do not make sense, given the observations.** Our response variable is abundance, which can only take integer values. Yet, when water content is 300, the abundance value that our model predicts to be the most probable is 1.63! We know that the probability of observing 1.63 individuals at water content = 300 is actually zero, as is the probability of observing any fraction (non-integers). Our predicted values should be modelled using a distribution that only predicts integers, rather than a continuous distribution like the normal distribution. This is a very common problem, as biological data often follows one of the myriad other statistical distributions besides the normal distribution.
+
+## So, what do we do now? Transform our data?
+
+Very often, data will not "behave" and will violate the assumptions we have seen, showing evidence for **non-normality** and/or **heteroskedasticity**.
+
+We have been told to **transform** our data using logarithmic, square-root, and cosine transformations to get around these problems. Unfortunately, transformations not always work and come with a few drawbacks:
+
+**1.**  They change the response variable (!), making interpretation challenging;\
+**2.**  They may not simultaneously improve linearity and homogeneity of variance;\
+**3.**  The boundaries of the sample space change.\
+
+For instance, our simple linear model:
+
+$$Y_i = \beta_0 + \beta_1X_i + \varepsilon$$
+
+looks like this after the log-transformation of $Y$:
+
+$$E(\log{Y_i}) = \beta_0 + \beta_1X_i$$
+
+It is, of course, much less intuitive to interpret that for every $300$ units increase in water content, _Galumna_ abundance takes the form of $\log(1.63)$...
+
+Thankfully, the **normal distribution is not our only option!**

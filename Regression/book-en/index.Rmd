@@ -1,0 +1,131 @@
+--- 
+title: 'Workshop 6: Generalized linear models'
+author: Developed and maintained by the contributors of the QCBS R Workshop Series^[The
+  and is maintained by the series coordinators and graduent student, postdoctoral,
+  and research professional members. **The contributors for this workshop can be accessed
+  [here](link)**.]
+  QCBS R Workshop Series is part of the [Québec Centre for Biodiversity Science](https://www.qcbs.ca),
+date: "`r Sys.time()`"
+subtitle: QCBS R Workshop Series
+site: bookdown::bookdown_site
+documentclass: book
+bibliography: references.bib
+biblio-style: apalike
+link-citations: true
+cover-image: assets/images/logo/csbq_logo_accueil.png
+github-repo: qcbsRworkshops/workshop06
+description: Generalized linear models in `R`
+favicon: assets/images/favicon.ico
+always_allow_html: true
+url: https\://github.com/qcbsRworkshops/
+config:
+  edit:
+    link: "https://github.com/qcbsRworkshops/workshop06/edit/main/book-en/%s"
+    text: Suggest changes
+---
+# (PART\*) QCBS R Workshop Series {-}
+
+# Preface {-}
+
+The **QCBS R Workshop Series** is a series of 10 workshops that walks participants through the steps required to use R for a wide array of statistical analyses relevant to research in biology and ecology. These open-access workshops were created by members of the QCBS both for members of the QCBS and the larger community.
+
+The content of this workshop has been peer-reviewed by various QCBS members. If you would like to suggest modifications, please contact the current series coordinators, listed on the main Github page.
+
+## Code of conduct
+
+The QCBS R Workshop Series and the QCBS R Symposium are venues dedicated to providing a welcoming and supportive environment for all people, regardless of background or identity.
+
+Participants, presenters and organizers of the workshop series and other related activities accept this Code of Conduct when being present at any workshop-related activities.
+
+We do not tolerate behaviour that is disrespectful or that excludes, intimidates, or causes discomfort to others.
+
+We do not tolerate discrimination or harassment based on characteristics that include, but are not limited to, gender identity and expression, sexual orientation, disability, physical appearance, body size, citizenship, nationality, ethnic or social origin, pregnancy, familial status, genetic information, religion or belief (or lack thereof), membership of a national minority, property, age, education, socio-economic status, technical choices, and experience level.
+
+It applies to all spaces managed by or affiliated with the workshop, including, but not limited to, workshops, email lists, and online forums such as GitHub, Slack and Twitter.
+
+### Expected behaviour
+
+All participants are expected to show respect and courtesy to others. All interactions should be professional regardless of platform: either online or in-person. In order to foster a positive and professional learning environment we encourage the following kinds of behaviours in all workshop events and platforms:
+
+- Use welcoming and inclusive language;
+- Be respectful of different viewpoints and experiences;
+- Gracefully accept constructive criticism;
+- Focus on what is best for the community;
+- Show courtesy and respect towards other community members.
+
+### Unacceptable behaviour
+
+Examples of unacceptable behaviour by participants at any workshop event/platform include:
+
+- written or verbal comments which have the effect of excluding people on the - basis of membership of any specific group;
+- causing someone to fear for their safety, such as through stalking or intimidation;
+- violent threats or language directed against another person;
+- the display of sexual or violent images;
+- unwelcome sexual attention;
+- nonconsensual or unwelcome physical contact;
+- insults or put-downs;
+- sexist, racist, homophobic, transphobic, ableist, or exclusionary jokes;
+- incitement to violence, suicide, or self-harm;
+- continuing to initiate interaction (including photography or recording) with - someone after being asked to stop;
+- publication of private communication without consent.
+
+
+## Contributors
+
+```{r eval=FALSE, include=FALSE}
+THIS SECTION MUST ONLY BE EDITED BY THE COORDINATORS OF THE WORKSHOP SERIES
+```
+
+Originally developed by:
+
+Cédric Frenette Dussault, Vincent Fugère, Thomas Lamy, Zofia Taranu
+
+Contributed with changes to the presentation and/or the written material:
+
+**2022** - **2021** - **2020**
+
+[Laurie Maynard](https://github.com/LaurieMaynard)\
+[Pedro Henrique P. Braga](https://github.com/pedrohbraga)\
+[Katherine Hébert](https://github.com/katherinehebert)\
+[Alex Arkilanian](https://github.com/aarkilanian)\
+[Mathieu Vaillancourt](mathieu.vaillancourt.2@ulaval.ca)\
+[Esteban Góngora](https://github.com/estebangongora)\
+
+**2019** - **2018** - **2017**
+
+[Azenor Bideault](https://github.com/Azenor)\
+[Willian Vieira](https://github.com/willvieira)\
+[Pedro Henrique P. Braga](https://github.com/pedrohbraga)\
+[Marie Hélène Brice](https://github.com/mhBrice)\
+[Kevin Cazelles](https://github.com/KevCaz)\
+
+**2016** - **2015** - **2014**
+
+[Cédric Frenette Dussault]()\
+[Thomas Lamy]()\
+[Zofia Taranu](https://github.com/zetaranu)\
+[Vincent Fugère](https://github.com/VFugere)\
+
+Contributed by reporting issues and suggesting modifications:
+
+## Contributing
+
+The QCBS R Workshop Series provides a venue for graduate students and postdoctoral fellows to improve their teaching and learning abilities through the instruction and the development of statistical and programming workshops. We immensely value the contributions provided to the series, and we rely on the QCBS community’s engagement to constantly improve our workshops. To encourage community contributions, we keep our workshops openly accessible, reproducible, and encourage collaboration between contributors.
+
+The QCBS offers Learning and Development Awards (LeaDA) to support graduates student and post-doctoral QCBS members who instruct or develop workshops. We also welcome voluntary community feedback to keep the workshops up to date and as helpful as possible!
+
+For more information about contributing, view our [Presentation and Development Protocol](https://r.qcbs.ca/presenter-developer-protocol/).
+
+
+```{r include=FALSE}
+library(knitr)
+opts_chunk$set(tidy.opts = list(width.cutoff = 60),
+               tidy = FALSE)
+
+mypar = list(mar = c(3, 3, 1, 0.5), 
+             mgp = c(1.6, 0.3, 0), 
+             tck = -.02)
+
+
+options(repos=structure(c(CRAN = "http://cran.r-project.org")))
+```

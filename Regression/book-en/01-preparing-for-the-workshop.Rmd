@@ -1,0 +1,93 @@
+# (PART\*) Generalized linear models in `R` {-}
+
+# Learning objectives
+
+A significant limitation of general linear models is that they cannot accommodate response variables that do not have a normal error distribution - a situation that is very common when analyzing biological data. 
+
+In this workshop, you will learn how to use **generalized linear models**, which are powerful tools to overcome some of the distributional assumptions of linear models. Specifically, we will:
+
+1. Distinguish generalized linear models from general linear models (including many of their equations!).
+
+2. Identify situations for when the use of generalized linear models is appropriate.
+
+3. Test assumptions for generalized linear models.
+
+4. Implement and execute generalized linear models in binary, proportion and count data.
+
+5. Validate, interpret and visualise results of generalized linear models.
+
+
+# Preparing for the workshop
+
+```{r eval=FALSE, echo=FALSE, purl=TRUE}
+##### Notice ###
+###                                                                             #
+### This is an automatically generated script based on the code chunks from the #
+### book for this workshop.                                                     #
+###                                                                             #
+### It is minimally annotated to allow participants to provide their comments:  # 
+### a practice that we highly encourage.                                        #
+###                                                                             #
+### Note that the solutions to the challenges are also included in this script. #
+### When solving the challenges by yourself, attempt to not scroll and peek at  #
+### the solutions.                                                              #
+###                                                                             #
+### Happy coding!                                                               #
+
+```
+
+To prepare for this workshop, you must download and install the earliest RStudio and R versions. You must also download the data we will use during this workshop:
+
+-    [Mites](https://raw.githubusercontent.com/QCBSRworkshops/workshop06/main/book-en/data/mites.csv)
+-    [Faramea](https://github.com/QCBSRworkshops/workshop06/blob/main/book-en/data/faramea.csv)
+
+
+This workshop requires the following `R` packages:
+
+-    [ggplot2](https://cran.r-project.org/package=ggplot2) 
+-    [MASS](https://cran.r-project.org/package=MASS) 
+-    [vcdExtra](https://cran.r-project.org/package=vcdExtra) 
+-    [bbmle](https://cran.r-project.org/package=bbmle)
+-    [DescTools](https://cran.r-project.org/package=DescTools)
+
+To install them from CRAN, run:
+
+```{r eval = FALSE}
+install.packages(c('ggplot2', 
+                   'MASS',
+                   'ggpmisc',
+                   'vcdExtra',
+                   'bbmle',
+                   'DescTools',
+                   'GlmSimulatoR',
+                   'cplm')
+                 )
+```
+
+```{r, echo = FALSE, eval = TRUE, results='hide', purl = FALSE}
+install.packages(c('ggplot2',
+                   'ggpmisc',
+                   'MASS', 
+                   'vcdExtra',
+                   'bbmle',
+                   'DescTools',
+                   'GlmSimulatoR',
+                   'cplm'),
+                 quiet = TRUE)
+```
+
+
+To load these packages, run:
+
+```{r, echo = TRUE, message=FALSE}
+library(ggplot2)
+library(MASS)
+library(vcdExtra)
+library(bbmle)
+library(DescTools)
+library(GlmSimulatoR)
+library(cplm)
+library(ggpmisc)
+```
+
+This workshop will build up your knowledge on models along side with some of their important equations. *Do not run to the mountains!* This will be achieved progressively and you will feel proud of yourself after!

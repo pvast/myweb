@@ -1,0 +1,34 @@
+# (PART\*) GLM with proportion data {-}
+
+# Binomial GLM and proportions
+
+Sometimes, proportion data are more similar to logistic regression than you think.
+
+In discrete counts, we can, for instance, measure the number of presence of individuals in relation to the total number of populations sampled.
+
+We will thus obtain a proportional number of "success" in observing individuals by dividing the counts by the total counts.
+
+In `glm()`, we have to provide prior weights if the response variable is the proportion of successes.
+
+Proportions can be modelled by providing both the number of "successes" and prior weights in the function
+
+```{r, echo = FALSE, eval = TRUE}
+# Let's try this process again with proportion data!
+mites <- read.csv('mites.csv')
+```
+```{r, echo = TRUE, eval = TRUE}
+prop.reg <- glm(cbind(Galumna, totalabund - Galumna) ~ Topo + WatrCont,
+                data = mites,
+                family = binomial)
+summary(prop.reg)
+```
+
+The weights can also be set explicitly in `glm()`:
+
+```{r, echo = TRUE, eval = TRUE}
+prop.reg2 <- glm(prop ~ Topo + WatrCont,
+                 data = mites,
+                 family = binomial,
+                 weights = totalabund) # provide prior weights
+summary(prop.reg2)
+```
